@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quanto vale sua senha?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --panel: #12181F;
+    --panel-2: #171F28;
+    --ink: #F3F5F7;
+    --muted: #8B96A5;
+    --yellow: #FFD23F;
+    --mint: #5EEAD4;
+    --red: #FF5468;
+    --line: rgba(255,255,255,0.08);
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B0F14; --panel: #12181F; --panel-2: #171F28; --ink: #F3F5F7; --muted: #8B96A5;
+    }
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-display);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--yellow); color: #0B0F14; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  section { padding: 88px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+
+  /* ---------- HERO ---------- */
+  .hero { padding-top: clamp(56px, 10vh, 110px); padding-bottom: 72px; }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--mint);
+    margin: 0 0 18px;
+    opacity: 0;
+    animation: rise .6s ease-out .1s forwards;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 54px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px;
+    max-width: 12ch;
+    opacity: 0;
+    animation: rise .7s ease-out .2s forwards;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 18px;
+    max-width: 46ch;
+    margin: 0 0 40px;
+    opacity: 0;
+    animation: rise .7s ease-out .32s forwards;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px);} to { opacity: 1; transform: translateY(0);} }
+
+  .tester {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px;
+    opacity: 0;
+    animation: rise .7s ease-out .44s forwards;
+  }
+  .tester label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .input-row { display: flex; gap: 10px; }
+  #pw {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .2s ease;
+    min-width: 0;
+  }
+  #pw:focus { border-color: var(--mint); }
+  #toggle {
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 0 16px;
+    cursor: pointer;
+  }
+  #toggle:hover { color: var(--ink); border-color: var(--muted); }
+
+  .meter-track {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    margin-top: 18px;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--red);
+    border-radius: 3px;
+    transition: width .35s ease, background-color .35s ease;
+  }
+
+  .result { margin-top: 22px; }
+  .result-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .result-time {
+    font-family: var(--font-mono);
+    font-size: clamp(26px, 5vw, 38px);
+    font-weight: 700;
+    color: var(--yellow);
+    word-break: break-word;
+  }
+  .result-note { font-size: 14px; color: var(--muted); margin-top: 8px; min-height: 20px; }
+
+  /* ---------- shared ---------- */
+  h2 {
+    font-size: clamp(24px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    max-width: 20ch;
+  }
+  p.lead { color: var(--muted); font-size: 16px; max-width: 52ch; margin: 0 0 36px; }
+
+  /* ---------- common passwords ---------- */
+  .list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+  }
+  .list-row:last-child { border-bottom: 1px solid var(--line); }
+  .list-row .word { font-size: 16px; }
+  .list-row .time { color: var(--red); font-size: 14px; white-space: nowrap; }
+  .list-row .rank { color: var(--muted); font-size: 13px; width: 24px; }
+  .list-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding-bottom: 4px; }
+
+  /* ---------- bar comparison ---------- */
+  .bars { display: flex; flex-direction: column; gap: 22px; margin-top: 8px; }
+  .bar-item .bar-label {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 14px; margin-bottom: 8px;
+  }
+  .bar-item .bar-label .pw { color: var(--ink); }
+  .bar-item .bar-label .t { color: var(--muted); }
+  .bar-track { height: 10px; background: var(--panel); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; width: 0%; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+
+  /* ---------- tips ---------- */
+  .tips { display: flex; flex-direction: column; gap: 0; }
+  .tip {
+    display: flex; gap: 18px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+  .tips .tip:last-child { border-bottom: 1px solid var(--line); }
+  .tip .num { font-family: var(--font-mono); color: var(--mint); font-size: 14px; padding-top: 2px; }
+  .tip .body h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .tip .body p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  /* ---------- generator ---------- */
+  .gen-box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px;
+  }
+  .gen-output {
+    font-family: var(--font-mono);
+    font-size: clamp(18px, 3.4vw, 24px);
+    color: var(--mint);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+    word-break: break-all;
+    border: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .gen-btn {
+    background: var(--mint);
+    color: #0B0F14;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .gen-btn:active { transform: scale(0.97); }
+  .gen-btn.copied { background: var(--yellow); }
+
+  footer {
+    padding: 56px 0 calc(56px + env(safe-area-inset-bottom, 0px));
+    text-align: left;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer a { color: var(--ink); }
+
+  @media (max-width: 520px) {
+    section { padding: 64px 0; }
+    .tester { padding: 20px; }
+    .input-row { flex-direction: column; }
+    #toggle { padding: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <section class="hero">
+    <p class="kicker">teste de senha</p>
+    <h1>Quanto tempo um computador levaria para adivinhar sua senha?</h1>
+    <p class="sub">Digite uma senha (de verdade ou fake — nada sai daqui) e veja o tempo estimado de quebra em tempo real.</p>
+
+    <div class="tester">
+      <label for="pw">Sua senha</label>
+      <div class="input-row">
+        <input id="pw" type="password" autocomplete="off" spellcheck="false" placeholder="digite aqui..." />
+        <button id="toggle" type="button">mostrar</button>
+      </div>
+      <div class="meter-track"><div class="meter-fill" id="meterFill"></div></div>
+      <div class="result">
+        <div class="result-label">tempo estimado para quebrar</div>
+        <div class="result-time" id="resultTime">—</div>
+        <div class="result-note" id="resultNote"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="comuns">
+    <h2>As senhas favoritas do mundo inteiro</h2>
+    <p class="lead">Estas são algumas das senhas mais usadas globalmente. Todas caem instantaneamente — porque já estão na primeira lista que qualquer invasor testa.</p>
+    <div class="list-head"><span>senha</span><span>tempo até quebrar</span></div>
+    <div id="commonList"></div>
+  </section>
+
+  <section id="comparar">
+    <h2>Comprimento e variedade mudam tudo</h2>
+    <p class="lead">Cada caractere extra multiplica as combinações possíveis. Veja a diferença entre algumas escolhas comuns.</p>
+    <div class="bars" id="barList"></div>
+  </section>
+
+  <section id="dicas">
+    <h2>Como montar uma senha que aguenta</h2>
+    <p class="lead">Nenhuma regra mágica — só matemática simples a seu favor.</p>
+    <div class="tips">
+      <div class="tip">
+        <div class="num">1</div>
+        <div class="body">
+          <h3>Priorize o comprimento</h3>
+          <p>16 caracteres aleatórios batem qualquer senha curta cheia de símbolos. Cada caractere a mais multiplica o tempo de quebra.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="num">2</div>
+        <div class="body">
+          <h3>Use frases, não palavras</h3>
+          <p>Quatro palavras aleatórias sem relação entre si — algo como "girafa-toalha-cometa-42" — são longas, memoráveis e difíceis de adivinhar.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="num">3</div>
+        <div class="body">
+          <h3>Nunca reutilize</h3>
+          <p>Uma senha vazada em um site vira a chave de todos os outros onde você a usou. Cada conta importante merece a sua própria.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="num">4</div>
+        <div class="body">
+          <h3>Deixe um gerenciador lembrar por você</h3>
+          <p>Ninguém decora vinte senhas fortes. Um gerenciador de senhas cria e guarda isso, e você só precisa lembrar de uma.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gerar">
+    <h2>Ou gere uma agora</h2>
+    <p class="lead">Uma senha aleatória de 16 caracteres, pronta para usar.</p>
+    <div class="gen-box">
+      <div class="gen-output" id="genOutput">clique em gerar</div>
+      <button class="gen-btn" id="genBtn" type="button">gerar nova senha</button>
+    </div>
+  </section>
+
+  <footer>
+    feito para lembrar você de trocar aquela senha que só tem o nome do seu cachorro.
+  </footer>
+
+</div>
+
+<script>
+  // ---------- crack-time engine ----------
+  const COMMON = ["123456","password","123456789","12345678","qwerty","abc123","password1","111111","123123","letmein","welcome","monkey","dragon","iloveyou","admin"];
+
+  function charsetSize(pw) {
+    let size = 0;
+    if (/[a-z]/.test(pw)) size += 26;
+    if (/[A-Z]/.test(pw)) size += 26;
+    if (/[0-9]/.test(pw)) size += 10;
+    if (/[^a-zA-Z0-9]/.test(pw)) size += 32;
+    return size || 1;
+  }
+
+  function secondsToCrack(pw) {
+    if (!pw) return 0;
+    if (COMMON.includes(pw.toLowerCase())) return 0.0001;
+    const entropy = pw.length * Math.log2(charsetSize(pw));
+    const combinations = Math.pow(2, entropy);
+    const guessesPerSecond = 1e10; // offline attack, modern hardware
+    return combinations / (2 * guessesPerSecond);
+  }
+
+  function formatTime(seconds) {
+    if (seconds < 0.01) return "instantâneo";
+    const units = [
+      [60, "segundos"],
+      [60, "minutos"],
+      [24, "horas"],
+      [365, "dias"],
+      [1000, "anos"],
+      [1000, "mil anos"],
+      [1000, "milhão de anos"],
+      [1000, "bilhão de anos"],
+    ];
+    let value = seconds;
+    let label = "segundos";
+    for (let i = 0; i < units.length; i++) {
+      const [div, name] = units[i];
+      if (value < div || i === units.length - 1) { label = name; break; }
+      value = value / div;
+    }
+    if (value >= 1000) return "mais de um bilhão de anos";
+    const rounded = value < 10 ? value.toFixed(1) : Math.round(value);
+    return `${rounded} ${label}`;
+  }
+
+  function strengthColor(seconds) {
+    if (seconds < 1) return "var(--red)";
+    if (seconds < 3600 * 24 * 30) return "#FF9F43";
+    if (seconds < 3600 * 24 * 365 * 10) return "var(--yellow)";
+    return "var(--mint)";
+  }
+
+  function strengthPercent(seconds) {
+    if (seconds <= 0) return 2;
+    const years = seconds / (3600 * 24 * 365);
+    const p = Math.min(100, (Math.log10(years + 1) / 12) * 100);
+    return Math.max(2, p);
+  }
+
+  const pwInput = document.getElementById('pw');
+  const meterFill = document.getElementById('meterFill');
+  const resultTime = document.getElementById('resultTime');
+  const resultNote = document.getElementById('resultNote');
+  const toggle = document.getElementById('toggle');
+
+  function updateTester() {
+    const val = pwInput.value;
+    const seconds = secondsToCrack(val);
+    if (!val) {
+      meterFill.style.width = "0%";
+      resultTime.textContent = "—";
+      resultNote.textContent = "";
+      return;
+    }
+    const color = strengthColor(seconds);
+    meterFill.style.width = strengthPercent(seconds) + "%";
+    meterFill.style.background = color;
+    resultTime.textContent = formatTime(seconds);
+    resultTime.style.color = color;
+    if (COMMON.includes(val.toLowerCase())) {
+      resultNote.textContent = "essa está entre as senhas mais usadas do mundo.";
+    } else if (val.length < 8) {
+      resultNote.textContent = "curta demais — cada caractere a mais ajuda muito.";
+    } else if (seconds > 3600*24*365*100) {
+      resultNote.textContent = "essa aguentaria uma tentativa séria de invasão.";
+    } else {
+      resultNote.textContent = "dá pra melhorar: mais comprimento, menos padrão previsível.";
+    }
+  }
+  pwInput.addEventListener('input', updateTester);
+
+  toggle.addEventListener('click', () => {
+    const showing = pwInput.type === 'text';
+    pwInput.type = showing ? 'password' : 'text';
+    toggle.textContent = showing ? 'mostrar' : 'ocultar';
+  });
+
+  // ---------- common password list ----------
+  const commonListEl = document.getElementById('commonList');
+  COMMON.slice(0, 10).forEach((pw, i) => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span class="rank">${i+1}</span><span class="word">${pw}</span><span class="time">instantâneo</span>`;
+    commonListEl.appendChild(row);
+  });
+
+  // ---------- comparison bars ----------
+  const COMPARE = [
+    { pw: "senha123", },
+    { pw: "Senha123!", },
+    { pw: "girafa-azul-42", },
+    { pw: "K9#mQ2$vL8@pX4nR", },
+  ];
+  const barListEl = document.getElementById('barList');
+  const maxLogSeconds = Math.log10(secondsToCrack("K9#mQ2$vL8@pX4nR") + 1);
+
+  COMPARE.forEach(item => {
+    const seconds = secondsToCrack(item.pw);
+    const label = formatTime(seconds);
+    const pct = Math.max(3, (Math.log10(seconds + 1) / maxLogSeconds) * 100);
+    const color = strengthColor(seconds);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bar-item';
+    wrap.innerHTML = `
+      <div class="bar-label"><span class="pw">${item.pw}</span><span class="t">${label}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="background:${color}"></div></div>
+    `;
+    barListEl.appendChild(wrap);
+  });
+
+  // animate bars in when scrolled into view
+  const barFills = () => document.querySelectorAll('.bar-fill');
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const fills = barFills();
+        COMPARE.forEach((item, idx) => {
+          const seconds = secondsToCrack(item.pw);
+          const pct = Math.max(3, (Math.log10(seconds + 1) / maxLogSeconds) * 100);
+          if (fills[idx]) fills[idx].style.width = pct + "%";
+        });
+        barObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  barObserver.observe(document.getElementById('comparar'));
+
+  // ---------- generator ----------
+  const genBtn = document.getElementById('genBtn');
+  const genOutput = document.getElementById('genOutput');
+  const CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_=+";
+
+  function generatePassword(length = 16) {
+    const arr = new Uint32Array(length);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, n => CHARS[n % CHARS.length]).join('');
+  }
+
+  genBtn.addEventListener('click', async () => {
+    const pw = generatePassword(16);
+    genOutput.textContent = pw;
+    try {
+      await navigator.clipboard.writeText(pw);
+      genBtn.textContent = "copiada!";
+      genBtn.classList.add('copied');
+      setTimeout(() => { genBtn.textContent = "gerar nova senha"; genBtn.classList.remove('copied'); }, 1400);
+    } catch (e) {
+      genBtn.textContent = "gerar nova senha";
+    }
+  });
+</script>
+
+</body>
+</html>

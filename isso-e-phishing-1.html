@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Isso é phishing?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --panel: #12181F;
+    --panel-2: #171F28;
+    --ink: #F3F5F7;
+    --muted: #8B96A5;
+    --yellow: #FFD23F;
+    --mint: #5EEAD4;
+    --red: #FF5468;
+    --line: rgba(255,255,255,0.08);
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-display);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  ::selection { background: var(--yellow); color: #0B0F14; }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 20px 40px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header { margin-bottom: 22px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 13px; color: var(--mint); margin: 0 0 8px; }
+  h1 { font-size: clamp(24px, 6vw, 30px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 10px; line-height: 1.15; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0; max-width: 44ch; }
+
+  .hud-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 22px 0 4px;
+  }
+  .progress-track { flex: 1; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--mint); border-radius: 3px; transition: width .35s ease; }
+  .score { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+  .timer-wrap { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .timer-track { width: 48px; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+  .timer-fill { height: 100%; width: 100%; background: var(--mint); border-radius: 3px; transition: width .1s linear, background-color .2s ease; }
+
+  .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 18px 0; }
+
+  .msg-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    animation: cardIn .35s ease;
+  }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  .msg-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; gap: 10px; }
+  .msg-type { font-family: var(--font-mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
+  .msg-from { font-family: var(--font-mono); font-size: 13px; color: var(--ink); word-break: break-all; }
+  .msg-body { font-size: 16px; line-height: 1.55; color: var(--ink); }
+  .msg-body .subject { font-weight: 600; display: block; margin-bottom: 8px; }
+
+  .choices { display: flex; gap: 12px; margin-top: 22px; }
+  .choice-btn {
+    flex: 1;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 16px 10px;
+    cursor: pointer;
+    transition: border-color .15s ease, transform .1s ease;
+  }
+  .choice-btn:hover { border-color: var(--muted); }
+  .choice-btn:active { transform: scale(0.97); }
+  .choice-btn:disabled { cursor: default; }
+  .choice-btn.correct { border-color: var(--mint); background: rgba(94,234,212,0.1); }
+  .choice-btn.wrong { border-color: var(--red); background: rgba(255,84,104,0.1); }
+
+  .feedback {
+    margin-top: 18px;
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+    animation: cardIn .3s ease;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(94,234,212,0.1); border: 1px solid var(--mint); color: var(--ink); }
+  .feedback.wrong { background: rgba(255,84,104,0.1); border: 1px solid var(--red); color: var(--ink); }
+  .feedback .fverdict { font-family: var(--font-mono); font-size: 12px; margin-bottom: 6px; display: block; }
+  .feedback.correct .fverdict { color: var(--mint); }
+  .feedback.wrong .fverdict { color: var(--red); }
+
+  .next-btn {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--yellow);
+    color: #0B0F14;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn.show { display: block; }
+
+  .end-screen { display: none; text-align: left; }
+  .end-screen.show { display: block; animation: cardIn .4s ease; }
+  .end-score { font-family: var(--font-mono); font-size: clamp(44px, 14vw, 64px); font-weight: 700; color: var(--yellow); margin: 6px 0 4px; }
+  .end-label { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+  .end-msg { font-size: 16px; margin-bottom: 26px; color: var(--ink); }
+  .restart-btn {
+    background: var(--mint);
+    color: #0B0F14;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 22px;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <p class="eyebrow">jogo · reconhecer golpes · modo difícil</p>
+    <h1>Isso é phishing?</h1>
+    <p class="sub">14 mensagens bem mais sutis — algumas legítimas parecem alarmantes, algumas falsas parecem profissionais. E você tem só 10 segundos por rodada.</p>
+  </header>
+
+  <div class="hud-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="score" id="scoreLabel">0 / 14</div>
+    <div class="timer-wrap"><div class="timer-track"><div class="timer-fill" id="timerFill"></div></div></div>
+  </div>
+
+  <div class="stage">
+    <div id="msgCard"></div>
+
+    <div class="end-screen" id="endScreen">
+      <p class="eyebrow">resultado</p>
+      <div class="end-score" id="endScore">0/14</div>
+      <div class="end-label">mensagens identificadas corretamente</div>
+      <p class="end-msg" id="endMsg"></p>
+      <button class="restart-btn" id="restartBtn">jogar de novo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROUND_TIME = 10000; // ms
+
+const ROUNDS = [
+  {
+    type: "e-mail", from: "Banco Itaú <atendimento@itau-atualiza.com.br>",
+    subject: "Atualização cadastral obrigatória",
+    body: "Para continuar usando sua conta normalmente, atualize seus dados cadastrais pelo aplicativo até o fim do mês.",
+    isPhishing: true,
+    why: "O domínio real é itau.com.br — 'itau-atualiza.com.br' é um domínio parecido, mas diferente. Sem a urgência de horas, fica mais difícil perceber, então o hábito de checar o domínio é o que salva aqui."
+  },
+  {
+    type: "e-mail", from: "Nubank <no-reply@nubank.com.br>",
+    subject: "Detectamos uma tentativa de login incomum",
+    body: "Se foi você, pode ignorar esta mensagem. Se não reconhece esse acesso, abra o app e revise os dispositivos conectados.",
+    isPhishing: false,
+    why: "Domínio oficial nubank.com.br, e o alerta direciona para dentro do app em vez de um link externo — mesmo soando alarmante, é o padrão real de segurança."
+  },
+  {
+    type: "e-mail", from: "Suporte Google <security-noreply@accounts-google.com>",
+    subject: "Alguém tentou acessar sua conta Google",
+    body: "Clique para revisar a atividade recente e proteger sua conta agora.",
+    isPhishing: true,
+    why: "O domínio oficial do Google é accounts.google.com (subdomínio de google.com). 'accounts-google.com' é um domínio totalmente diferente, só parecido na aparência."
+  },
+  {
+    type: "e-mail", from: "Uber <uber@uber.com>",
+    subject: "",
+    body: "Sua viagem terminou. Avalie o motorista e confira o recibo no app.",
+    isPhishing: false,
+    why: "Domínio oficial uber.com, mensagem curta e informativa, sem link pedindo dados — típico e-mail pós-viagem real."
+  },
+  {
+    type: "e-mail", from: "Amazon <pedidos@amazon-br.shop>",
+    subject: "Problema com o pedido #482910",
+    body: "Não conseguimos processar o pagamento do seu pedido. Atualize o cartão para evitar o cancelamento.",
+    isPhishing: true,
+    why: "'amazon-br.shop' não é domínio da Amazon (o real é amazon.com.br). O número de pedido específico é só um detalhe pra parecer mais real."
+  },
+  {
+    type: "e-mail", from: "Banco Bradesco <fraude@bradesco.com.br>",
+    subject: "Bloqueio preventivo de cartão",
+    body: "Identificamos uma compra fora do padrão e bloqueamos seu cartão por segurança. Ligue para o número no verso do cartão para confirmar.",
+    isPhishing: false,
+    why: "Domínio oficial bradesco.com.br, e a ação pedida é ligar para o número impresso no próprio cartão — um canal que você mesmo verifica, não um link."
+  },
+  {
+    type: "SMS", from: "BANCO",
+    subject: "",
+    body: "Sua fatura de R$ 2.340,00 vence hoje. Evite juros, pague agora: bradesc0-pagamentos.com",
+    isPhishing: true,
+    why: "Repare no '0' no lugar do 'o' em 'bradesc0' — troca de caractere clássica. O remetente 'BANCO' genérico também pode ser forjado em SMS."
+  },
+  {
+    type: "e-mail", from: "Spotify <no-reply@spotify.com>",
+    subject: "Sua assinatura foi renovada",
+    body: "Cobramos R$ 21,90 referente ao plano Premium deste mês. Veja os detalhes no app.",
+    isPhishing: false,
+    why: "Domínio oficial spotify.com, tom informativo e rotineiro, sem link pressionando clique — cobrança normal de assinatura."
+  },
+  {
+    type: "e-mail", from: "RH <rh@empresa-corp.com>",
+    subject: "Atualize seus dados bancários",
+    body: "Para o próximo pagamento de salário, confirme seus dados bancários preenchendo o formulário em anexo.",
+    isPhishing: true,
+    why: "O domínio da empresa real seria algo como empresa.com.br — 'empresa-corp.com' é diferente. RH raramente pede dados bancários por formulário de e-mail."
+  },
+  {
+    type: "SMS", from: "PIX RECEBIDO",
+    subject: "",
+    body: "Você recebeu R$ 45,00 via Pix de Maria Souza às 14:32.",
+    isPhishing: false,
+    why: "Apenas informa o recebimento, sem pedir clique, confirmação ou dado nenhum — é exatamente como uma notificação real de Pix se parece."
+  },
+  {
+    type: "e-mail", from: "Correios <rastreio@correios-entrega.com>",
+    subject: "Encomenda retida por falta de pagamento de taxa",
+    body: "Sua encomenda está retida na unidade de triagem. Pague a taxa de R$ 14,90 para liberar a entrega.",
+    isPhishing: true,
+    why: "O domínio oficial é correios.com.br. Os Correios não cobram 'taxas de liberação' por link em SMS ou e-mail — é um dos golpes mais comuns no Brasil."
+  },
+  {
+    type: "e-mail", from: "GitHub <noreply@github.com>",
+    subject: "New sign-in to your account",
+    body: "We noticed a new sign-in to your account from a new device. If this was you, no action is needed.",
+    isPhishing: false,
+    why: "Domínio oficial github.com, apenas informa sem exigir ação nem link de 'verificação' — padrão real de aviso de segurança."
+  },
+  {
+    type: "e-mail", from: "WhatsApp <verificacao@whatsapp-suporte.com>",
+    subject: "",
+    body: "Seu WhatsApp será desativado em 24h por violar os termos de uso. Cancele o processo clicando no link abaixo.",
+    isPhishing: true,
+    why: "'whatsapp-suporte.com' não pertence à Meta/WhatsApp. Na prática, o WhatsApp praticamente não manda avisos assim por e-mail."
+  },
+  {
+    type: "e-mail", from: "Banco Inter <atendimento@bancointer.com.br>",
+    subject: "Seu limite do cartão foi aumentado",
+    body: "Boas notícias! Seu limite passou para R$ 3.200,00. Consulte os detalhes no app Inter.",
+    isPhishing: false,
+    why: "Domínio oficial bancointer.com.br, conteúdo positivo e não urgente, direciona para o app oficial em vez de um link externo."
+  }
+];
+
+let order = [];
+let current = 0;
+let score = 0;
+let answered = false;
+let timerStart = 0;
+let rafId = null;
+
+const msgCard = document.getElementById('msgCard');
+const progressFill = document.getElementById('progressFill');
+const timerFill = document.getElementById('timerFill');
+const scoreLabel = document.getElementById('scoreLabel');
+const endScreen = document.getElementById('endScreen');
+const endScore = document.getElementById('endScore');
+const endMsg = document.getElementById('endMsg');
+const restartBtn = document.getElementById('restartBtn');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function start() {
+  order = shuffle(ROUNDS.map((_, i) => i));
+  current = 0;
+  score = 0;
+  endScreen.classList.remove('show');
+  updateHud();
+  renderRound();
+}
+
+function updateHud() {
+  scoreLabel.textContent = `${score} / ${ROUNDS.length}`;
+  progressFill.style.width = (current / ROUNDS.length) * 100 + "%";
+}
+
+function renderRound() {
+  if (current >= ROUNDS.length) {
+    endGame();
+    return;
+  }
+  answered = false;
+  const r = ROUNDS[order[current]];
+  msgCard.innerHTML = `
+    <div class="msg-card">
+      <div class="msg-meta">
+        <span class="msg-from">${r.from}</span>
+        <span class="msg-type">${r.type}</span>
+      </div>
+      <div class="msg-body">
+        ${r.subject ? `<span class="subject">${r.subject}</span>` : ""}
+        ${r.body}
+      </div>
+      <div class="choices">
+        <button class="choice-btn" data-choice="legit">É real</button>
+        <button class="choice-btn" data-choice="scam">É golpe</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn">próxima</button>
+    </div>
+  `;
+  msgCard.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleChoice(btn, btn.dataset.choice, r));
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    current++;
+    updateHud();
+    renderRound();
+  });
+
+  runTimer(r);
+}
+
+function runTimer(r) {
+  timerStart = performance.now();
+  timerFill.style.width = "100%";
+  timerFill.style.background = "var(--mint)";
+  cancelAnimationFrame(rafId);
+  function tick(now) {
+    const elapsed = now - timerStart;
+    const pct = Math.max(0, 1 - elapsed / ROUND_TIME);
+    timerFill.style.width = (pct * 100) + "%";
+    if (pct < 0.3) timerFill.style.background = "var(--red)";
+    else if (pct < 0.6) timerFill.style.background = "var(--yellow)";
+    if (elapsed >= ROUND_TIME) {
+      if (!answered) timeUp(r);
+      return;
+    }
+    if (!answered) rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function timeUp(r) {
+  answered = true;
+  cancelAnimationFrame(rafId);
+  const correctChoice = r.isPhishing ? "scam" : "legit";
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.choice === correctChoice) b.classList.add('correct');
+  });
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show', 'wrong');
+  const verdict = r.isPhishing ? "isso era golpe" : "isso era legítimo";
+  feedback.innerHTML = `<span class="fverdict">tempo esgotado — ${verdict}</span>${r.why}`;
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function handleChoice(btn, choice, r) {
+  if (answered) return;
+  answered = true;
+  cancelAnimationFrame(rafId);
+  const guessedPhishing = choice === "scam";
+  const correct = guessedPhishing === r.isPhishing;
+  if (correct) score++;
+
+  const correctChoice = r.isPhishing ? "scam" : "legit";
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.choice === correctChoice) b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+  });
+
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show', correct ? 'correct' : 'wrong');
+  const verdict = r.isPhishing ? "isso era golpe" : "isso era legítimo";
+  feedback.innerHTML = `<span class="fverdict">${correct ? "certo — " : "quase — "}${verdict}</span>${r.why}`;
+
+  document.getElementById('nextBtn').classList.add('show');
+  scoreLabel.textContent = `${score} / ${ROUNDS.length}`;
+}
+
+function endGame() {
+  cancelAnimationFrame(rafId);
+  progressFill.style.width = "100%";
+  msgCard.innerHTML = "";
+  endScreen.classList.add('show');
+  endScore.textContent = `${score}/${ROUNDS.length}`;
+  let msg;
+  if (score === ROUNDS.length) msg = "Perfeito. Nem as mensagens mais sutis passaram batido.";
+  else if (score >= ROUNDS.length * 0.7) msg = "Muito bom — você pega a maioria dos sinais, mesmo os disfarçados.";
+  else if (score >= ROUNDS.length * 0.4) msg = "Deu pra pegar alguns, mas os disfarces mais sutis ainda enganam. Vale sempre checar o domínio com calma.";
+  else msg = "Modo difícil de verdade: aqui nem tom alarmante nem tom calmo é garantia de nada — o domínio é o que conta.";
+  endMsg.textContent = msg;
+}
+
+restartBtn.addEventListener('click', start);
+start();
+</script>
+</body>
+</html>

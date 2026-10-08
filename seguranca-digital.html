@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Segurança digital, na prática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --panel: #12181F;
+    --panel-2: #171F28;
+    --ink: #F3F5F7;
+    --muted: #8B96A5;
+    --yellow: #FFD23F;
+    --mint: #5EEAD4;
+    --red: #FF5468;
+    --line: rgba(255,255,255,0.08);
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-display);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--yellow); color: #0B0F14; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 72px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    background: rgba(11,15,20,0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    z-index: 10;
+  }
+  nav .wrap { display: flex; gap: 18px; padding-top: 14px; padding-bottom: 14px; overflow-x: auto; max-width: 760px; }
+  nav a {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 6px 12px;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav a:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* hero */
+  .hero { padding-top: clamp(44px, 8vh, 88px); padding-bottom: 60px; }
+  .kicker { font-family: var(--font-mono); font-size: 14px; color: var(--mint); margin: 0 0 18px; }
+  h1 {
+    font-size: clamp(30px, 6vw, 48px);
+    font-weight: 700; line-height: 1.1; letter-spacing: -0.02em;
+    margin: 0 0 20px; max-width: 14ch;
+  }
+  .sub { color: var(--muted); font-size: 18px; max-width: 52ch; margin: 0 0 16px; }
+  .sub2 { color: var(--muted); font-size: 16px; max-width: 54ch; margin: 0; }
+
+  h2 {
+    font-size: clamp(22px, 4vw, 28px);
+    font-weight: 700; letter-spacing: -0.01em;
+    margin: 0 0 14px; max-width: 26ch;
+  }
+  p.lead { color: var(--muted); font-size: 16px; max-width: 56ch; margin: 0 0 32px; }
+
+  /* numbered list (threats, steps) */
+  .numlist { display: flex; flex-direction: column; gap: 0; }
+  .numlist .item { display: flex; gap: 18px; padding: 22px 0; border-top: 1px solid var(--line); }
+  .numlist .item:last-child { border-bottom: 1px solid var(--line); }
+  .numlist .mark { font-family: var(--font-mono); font-size: 13px; color: var(--yellow); padding-top: 3px; width: 26px; flex-shrink: 0; }
+  .numlist .body h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .numlist .body p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  /* checklist */
+  .checklist { display: flex; flex-direction: column; gap: 0; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 0; border-top: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .checklist .check-item:last-child { border-bottom: 1px solid var(--line); }
+  .check-box {
+    width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px;
+    border: 1.5px solid var(--muted); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+  .check-item.done .check-box { background: var(--mint); border-color: var(--mint); }
+  .check-box svg { width: 13px; height: 13px; opacity: 0; transition: opacity .1s ease; }
+  .check-item.done .check-box svg { opacity: 1; }
+  .check-text { font-size: 15.5px; color: var(--ink); transition: color .15s ease, opacity .15s ease; }
+  .check-item.done .check-text { color: var(--muted); text-decoration: line-through; opacity: 0.8; }
+  .check-progress { font-family: var(--font-mono); font-size: 13px; color: var(--muted); margin-top: 18px; }
+
+  /* glossary accordion */
+  .gloss { display: flex; flex-direction: column; gap: 10px; }
+  .gloss details {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px 18px;
+  }
+  .gloss summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 14px 0;
+    font-weight: 600;
+    font-size: 15.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .gloss summary::-webkit-details-marker { display: none; }
+  .gloss summary .plus { font-family: var(--font-mono); color: var(--mint); font-size: 18px; transition: transform .2s ease; }
+  .gloss details[open] summary .plus { transform: rotate(45deg); }
+  .gloss .def { color: var(--muted); font-size: 14.5px; padding: 0 0 16px; margin: 0; }
+
+  /* game cards */
+  .games { display: flex; flex-direction: column; gap: 16px; }
+  .game-card {
+    display: block;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: border-color .2s ease, transform .15s ease;
+  }
+  .game-card:hover { border-color: var(--mint); transform: translateY(-2px); }
+  .game-card .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mint);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-bottom: 14px;
+  }
+  .game-card h3 { margin: 0 0 8px; font-size: 19px; font-weight: 700; }
+  .game-card p { margin: 0 0 16px; color: var(--muted); font-size: 15px; max-width: 52ch; }
+  .game-card .open {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--yellow);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .game-card .open .arrow { transition: transform .15s ease; }
+  .game-card:hover .open .arrow { transform: translateX(3px); }
+
+  /* password anatomy */
+  .anatomy { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+  .anatomy-row { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+  .anatomy-row .pw { font-family: var(--font-mono); font-size: 15px; }
+  .anatomy-row .t { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .anatomy-track { height: 8px; background: var(--panel); border-radius: 4px; overflow: hidden; }
+  .anatomy-fill { height: 100%; border-radius: 4px; }
+
+  footer {
+    padding: 56px 0 calc(56px + env(safe-area-inset-bottom, 0px));
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 520px) {
+    section { padding: 52px 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#riscos">golpes comuns</a>
+    <a href="#senhas">senhas</a>
+    <a href="#checklist">checklist</a>
+    <a href="#glossario">glossário</a>
+    <a href="#socorro">se você caiu em um golpe</a>
+    <a href="#testar">testar</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <p class="kicker">segurança digital</p>
+    <h1>A maioria dos golpes não precisa de hacker nenhum — só de um clique apressado</h1>
+    <p class="sub">Senha fraca, link disfarçado e e-mail com pressa artificial resolvem a maior parte do trabalho de quem quer te enganar.</p>
+    <p class="sub2">Esta página reúne o básico que realmente importa: os golpes mais comuns, como montar uma senha que aguenta, um checklist rápido, um glossário dos termos que aparecem por aí, o que fazer se você já caiu em algum golpe — e três testes práticos no final.</p>
+  </section>
+
+  <section id="riscos">
+    <h2>Os golpes mais comuns</h2>
+    <p class="lead">Táticas diferentes, mesmo objetivo: te fazer agir rápido demais para pensar.</p>
+    <div class="numlist">
+      <div class="item">
+        <div class="mark">01</div>
+        <div class="body">
+          <h3>Phishing</h3>
+          <p>E-mails que imitam bancos, lojas ou serviços, geralmente com um domínio levemente diferente do real, pedindo para "atualizar dados" ou "confirmar acesso".</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">02</div>
+        <div class="body">
+          <h3>Smishing</h3>
+          <p>A mesma lógica do phishing, mas por SMS — avisos falsos de Pix recebido, fatura vencendo ou encomenda retida, sempre com um link curto e atraente.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">03</div>
+        <div class="body">
+          <h3>Vishing</h3>
+          <p>Golpe por ligação telefônica. Alguém se passa por "segurança do banco" e, com calma e autoridade na voz, convence a vítima a passar senhas ou códigos de confirmação.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">04</div>
+        <div class="body">
+          <h3>Quishing</h3>
+          <p>A versão em QR code do phishing. O código leva a uma página falsa, e como ninguém "lê" um QR code antes de escanear, o golpe passa mais despercebido.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">05</div>
+        <div class="body">
+          <h3>Engenharia social</h3>
+          <p>Manipulação psicológica pura — golpe do parente em apuros, falso suporte técnico, falsa doação urgente. Não precisa invadir nada: só precisa que você confie na hora errada.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">06</div>
+        <div class="body">
+          <h3>Links e domínios falsos</h3>
+          <p>Endereços quase idênticos aos originais — uma letra trocada, um hífen a mais, um "0" no lugar de um "o" — levam a páginas feitas só para roubar dados digitados nelas.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">07</div>
+        <div class="body">
+          <h3>Wi-Fi público sem proteção</h3>
+          <p>Em redes abertas, o tráfego pode ser interceptado por quem estiver na mesma rede. Evite login em contas sensíveis assim, a menos que use uma VPN.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="senhas">
+    <h2>Como montar uma senha que aguenta</h2>
+    <p class="lead">Não é sobre decorar símbolos malucos — é sobre comprimento e imprevisibilidade.</p>
+
+    <div class="anatomy">
+      <div class="anatomy-row"><span class="pw">senha123</span><span class="t">instantâneo</span></div>
+      <div class="anatomy-track"><div class="anatomy-fill" style="width:3%; background:var(--red);"></div></div>
+
+      <div class="anatomy-row"><span class="pw">Senha123!</span><span class="t">horas</span></div>
+      <div class="anatomy-track"><div class="anatomy-fill" style="width:18%; background:#FF9F43;"></div></div>
+
+      <div class="anatomy-row"><span class="pw">girafa-azul-42</span><span class="t">séculos</span></div>
+      <div class="anatomy-track"><div class="anatomy-fill" style="width:60%; background:var(--yellow);"></div></div>
+
+      <div class="anatomy-row"><span class="pw">K9#mQ2$vL8@pX4nR</span><span class="t">bilhões de anos</span></div>
+      <div class="anatomy-track"><div class="anatomy-fill" style="width:100%; background:var(--mint);"></div></div>
+    </div>
+
+    <div class="numlist" style="margin-top: 36px;">
+      <div class="item">
+        <div class="mark">01</div>
+        <div class="body">
+          <h3>Priorize o comprimento</h3>
+          <p>16 caracteres aleatórios batem qualquer senha curta cheia de símbolos. Cada caractere a mais multiplica o número de combinações possíveis.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">02</div>
+        <div class="body">
+          <h3>Use frases, não palavras</h3>
+          <p>Quatro palavras sem relação entre si — "girafa-toalha-cometa-42" — são longas, fáceis de lembrar e difíceis de adivinhar por tentativa.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">03</div>
+        <div class="body">
+          <h3>Nunca reutilize</h3>
+          <p>Uma senha vazada em um site vira a chave de todos os outros onde você a usou. Cada conta importante merece a sua própria.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">04</div>
+        <div class="body">
+          <h3>Ative a autenticação de dois fatores</h3>
+          <p>Mesmo que a senha vaze, um segundo código (no celular ou num app autenticador) impede o acesso. É a camada que realmente detém a maioria dos ataques.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">05</div>
+        <div class="body">
+          <h3>Deixe um gerenciador lembrar por você</h3>
+          <p>Ninguém decora vinte senhas fortes. Um gerenciador de senhas cria e guarda isso — você só precisa lembrar de uma.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="checklist">
+    <h2>Checklist rápido</h2>
+    <p class="lead">Sete hábitos que cobrem a maior parte do risco. Marque o que você já faz.</p>
+    <div class="checklist" id="checklist"></div>
+    <p class="check-progress" id="checkProgress"></p>
+  </section>
+
+  <section id="glossario">
+    <h2>Glossário</h2>
+    <p class="lead">Os termos que aparecem quando o assunto é golpe digital.</p>
+    <div class="gloss">
+      <details>
+        <summary>Phishing <span class="plus">+</span></summary>
+        <p class="def">Tentativa de roubar dados se passando por uma empresa ou pessoa confiável, geralmente por e-mail.</p>
+      </details>
+      <details>
+        <summary>Smishing <span class="plus">+</span></summary>
+        <p class="def">A mesma tática do phishing, só que aplicada por SMS.</p>
+      </details>
+      <details>
+        <summary>Vishing <span class="plus">+</span></summary>
+        <p class="def">Golpe aplicado por ligação telefônica, muitas vezes fingindo ser o banco ou um órgão oficial.</p>
+      </details>
+      <details>
+        <summary>Quishing <span class="plus">+</span></summary>
+        <p class="def">Phishing feito através de QR codes que levam a páginas falsas em vez de um link de texto clicável.</p>
+      </details>
+      <details>
+        <summary>Engenharia social <span class="plus">+</span></summary>
+        <p class="def">Manipulação psicológica para fazer alguém revelar informações ou agir contra o próprio interesse, sem precisar invadir nada tecnicamente.</p>
+      </details>
+      <details>
+        <summary>Malware <span class="plus">+</span></summary>
+        <p class="def">Qualquer programa malicioso criado para roubar dados, espionar ou danificar um dispositivo.</p>
+      </details>
+      <details>
+        <summary>Ransomware <span class="plus">+</span></summary>
+        <p class="def">Tipo de malware que bloqueia ou criptografa seus arquivos e exige pagamento para liberá-los.</p>
+      </details>
+      <details>
+        <summary>Autenticação de dois fatores (2FA) <span class="plus">+</span></summary>
+        <p class="def">Uma segunda confirmação além da senha — como um código enviado ao celular — que impede acesso mesmo se a senha vazar.</p>
+      </details>
+      <details>
+        <summary>VPN <span class="plus">+</span></summary>
+        <p class="def">Camada que criptografa sua conexão com a internet, útil principalmente para navegar com mais segurança em redes Wi-Fi públicas.</p>
+      </details>
+      <details>
+        <summary>Typosquatting <span class="plus">+</span></summary>
+        <p class="def">Registro de domínios com erros de digitação propositais de marcas reais (ex: "amaz0n.com"), usados em golpes de link falso.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="socorro">
+    <h2>Se você já caiu em um golpe</h2>
+    <p class="lead">Agir rápido limita o estrago. A ordem importa.</p>
+    <div class="numlist">
+      <div class="item">
+        <div class="mark">01</div>
+        <div class="body">
+          <h3>Troque a senha na hora</h3>
+          <p>Da conta afetada e de qualquer outro lugar onde você usava a mesma senha.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">02</div>
+        <div class="body">
+          <h3>Ative a autenticação de dois fatores</h3>
+          <p>Se a conta ainda não tinha, esse é o momento. Isso bloqueia a maioria das tentativas de reacesso.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">03</div>
+        <div class="body">
+          <h3>Contate o serviço pelo canal oficial</h3>
+          <p>Use o app ou o telefone impresso no cartão — nunca um link ou número que veio na própria mensagem suspeita.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">04</div>
+        <div class="body">
+          <h3>Monitore extratos e faturas</h3>
+          <p>Acompanhe os próximos dias de perto. Movimentações estranhas, mesmo pequenas, valem contestação imediata.</p>
+        </div>
+      </div>
+      <div class="item">
+        <div class="mark">05</div>
+        <div class="body">
+          <h3>Denuncie</h3>
+          <p>Pelo canal do banco ou serviço afetado e, se fizer sentido, em uma delegacia ou no gov.br. Isso ajuda a bloquear o golpe para outras pessoas também.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="testar">
+    <h2>Teste na prática</h2>
+    <p class="lead">Três exercícios rápidos, cada um focado em um ponto diferente.</p>
+    <div class="games">
+      <a class="game-card" href="https://claude.ai/artifact/BawkberSVyqro8xaZEr49D" target="_blank" rel="noopener">
+        <span class="tag">senhas</span>
+        <h3>Quanto vale sua senha?</h3>
+        <p>Digite uma senha e veja em tempo real quanto tempo um computador levaria para quebrá-la — e o que muda isso.</p>
+        <span class="open">abrir <span class="arrow">→</span></span>
+      </a>
+      <a class="game-card" href="https://claude.ai/artifact/MqmNwudd7EftHEZi2TkbzT" target="_blank" rel="noopener">
+        <span class="tag">phishing</span>
+        <h3>Isso é phishing?</h3>
+        <p>14 mensagens reais de e-mail e SMS, cronômetro ligado: você decide se é golpe ou legítimo antes que o tempo acabe.</p>
+        <span class="open">abrir <span class="arrow">→</span></span>
+      </a>
+      <a class="game-card" href="https://claude.ai/artifact/BDGPeCmjRJGwarMWy5obJY" target="_blank" rel="noopener">
+        <span class="tag">links falsos</span>
+        <h3>Ache o link verdadeiro</h3>
+        <p>14 rodadas contra o tempo: entre domínios quase idênticos, só um pertence de verdade à marca.</p>
+        <span class="open">abrir <span class="arrow">→</span></span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    nenhum dado digitado em nenhum teste desta página sai do seu navegador.
+  </footer>
+
+</div>
+
+<script>
+  const CHECKLIST_ITEMS = [
+    "Ativei a autenticação de dois fatores nas contas mais importantes (e-mail, banco, redes sociais)",
+    "Uso um gerenciador de senhas",
+    "Nunca reutilizo a mesma senha em mais de um lugar",
+    "Verifico o domínio antes de clicar em links recebidos por e-mail ou SMS",
+    "Desconfio de qualquer mensagem com urgência artificial",
+    "Evito login em contas sensíveis em Wi-Fi público sem VPN",
+    "Mantenho o sistema e os apps atualizados"
+  ];
+
+  const STORAGE_KEY = "seguranca-digital-checklist";
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // storage unavailable — checklist still works for this session
+    }
+  }
+
+  const listEl = document.getElementById('checklist');
+  const progressEl = document.getElementById('checkProgress');
+  let state = loadState();
+
+  function render() {
+    listEl.innerHTML = "";
+    CHECKLIST_ITEMS.forEach((text, i) => {
+      const done = !!state[i];
+      const row = document.createElement('div');
+      row.className = 'check-item' + (done ? ' done' : '');
+      row.innerHTML = `
+        <div class="check-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0B0F14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="check-text">${text}</div>
+      `;
+      row.addEventListener('click', () => {
+        state[i] = !state[i];
+        saveState(state);
+        render();
+      });
+      listEl.appendChild(row);
+    });
+    const count = Object.values(state).filter(Boolean).length;
+    progressEl.textContent = `${count} de ${CHECKLIST_ITEMS.length} hábitos já em dia`;
+  }
+
+  render();
+</script>
+
+</body>
+</html>

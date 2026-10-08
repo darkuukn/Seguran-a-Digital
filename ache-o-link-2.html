@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ache o link verdadeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --panel: #12181F;
+    --panel-2: #171F28;
+    --ink: #F3F5F7;
+    --muted: #8B96A5;
+    --yellow: #FFD23F;
+    --mint: #5EEAD4;
+    --red: #FF5468;
+    --line: rgba(255,255,255,0.08);
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-display);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  ::selection { background: var(--yellow); color: #0B0F14; }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 20px 40px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header { margin-bottom: 22px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 13px; color: var(--yellow); margin: 0 0 8px; }
+  h1 { font-size: clamp(24px, 6vw, 30px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 10px; line-height: 1.15; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0; max-width: 44ch; }
+
+  .hud-row {
+    display: flex; align-items: center; gap: 14px;
+    margin: 22px 0 4px;
+    font-family: var(--font-mono); font-size: 13px; color: var(--muted);
+  }
+  .progress-track { flex: 1; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--yellow); border-radius: 3px; transition: width .35s ease; }
+
+  .timer-wrap { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .timer-track { width: 56px; height: 6px; background: var(--panel); border-radius: 3px; overflow: hidden; }
+  .timer-fill { height: 100%; width: 100%; background: var(--mint); border-radius: 3px; transition: width .1s linear, background-color .2s ease; }
+
+  .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 14px 0; }
+
+  .brand-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    animation: cardIn .3s ease;
+  }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  .brand-name { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+  .brand-hint { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn {
+    text-align: left;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .15s ease, transform .1s ease;
+    word-break: break-all;
+  }
+  .opt-btn:hover { border-color: var(--muted); }
+  .opt-btn:active { transform: scale(0.99); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { border-color: var(--mint); background: rgba(94,234,212,0.1); }
+  .opt-btn.wrong { border-color: var(--red); background: rgba(255,84,104,0.1); }
+
+  .feedback {
+    margin-top: 16px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+    animation: cardIn .3s ease;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .feedback.show { display: block; }
+
+  .next-btn {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--yellow);
+    color: #0B0F14;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn.show { display: block; }
+
+  .end-screen { display: none; text-align: left; }
+  .end-screen.show { display: block; animation: cardIn .4s ease; }
+  .end-score { font-family: var(--font-mono); font-size: clamp(44px, 14vw, 64px); font-weight: 700; color: var(--mint); margin: 6px 0 4px; }
+  .end-label { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+  .end-msg { font-size: 16px; margin-bottom: 26px; color: var(--ink); }
+  .restart-btn {
+    background: var(--yellow);
+    color: #0B0F14;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 22px;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <p class="eyebrow">jogo · sites falsos</p>
+    <h1>Ache o link verdadeiro</h1>
+    <p class="sub">Golpistas registram domínios quase idênticos aos originais. Entre as opções, clique no único endereço real — antes que o tempo acabe.</p>
+  </header>
+
+  <div class="hud-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span id="scoreLabel">0/14</span>
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div id="roundCard"></div>
+
+    <div class="end-screen" id="endScreen">
+      <p class="eyebrow">resultado</p>
+      <div class="end-score" id="endScore">0/14</div>
+      <div class="end-label">domínios reais identificados</div>
+      <p class="end-msg" id="endMsg"></p>
+      <button class="restart-btn" id="restartBtn">jogar de novo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROUNDS = [
+  {
+    brand: "Banco do Brasil",
+    real: "bb.com.br",
+    fakes: ["bancodobrasil-online.com", "bb-seguranca.net", "bb.com.br.acesso.com"]
+  },
+  {
+    brand: "Mercado Livre",
+    real: "mercadolivre.com.br",
+    fakes: ["mercadolivre-promocoes.com", "mercado-livre.com", "mercadolivree.com.br"]
+  },
+  {
+    brand: "WhatsApp Web",
+    real: "web.whatsapp.com",
+    fakes: ["whatsapp-web.net", "web-whatsapp.com", "whatsappweb.com.br"]
+  },
+  {
+    brand: "Receita Federal",
+    real: "gov.br/receitafederal",
+    fakes: ["receita.gov.com", "receitafederal.net", "receita-restituicao.com"]
+  },
+  {
+    brand: "Netflix",
+    real: "netflix.com",
+    fakes: ["netflix-br-cobranca.com", "netflix.com.atualizacao.net", "netflix-login.com"]
+  },
+  {
+    brand: "Instagram",
+    real: "instagram.com",
+    fakes: ["instagram-verificacao.com", "instagran.com", "insta-gram.com"]
+  },
+  {
+    brand: "PayPal",
+    real: "paypal.com",
+    fakes: ["paypal-secure.net", "paypa1.com", "paypal.com-verificar.info"]
+  },
+  {
+    brand: "Nubank",
+    real: "nubank.com.br",
+    fakes: ["nu-bank.com", "nubank-app.net", "nubankoficial.com"]
+  },
+  {
+    brand: "Google",
+    real: "google.com",
+    fakes: ["goog1e.com", "google-verificacao.com", "google.com.acesso.net"]
+  },
+  {
+    brand: "Caixa Econômica Federal",
+    real: "caixa.gov.br",
+    fakes: ["caixa-economica.net", "caixa.com.br.acesso.com", "caixaonline.info"]
+  },
+  {
+    brand: "Amazon",
+    real: "amazon.com.br",
+    fakes: ["amazon-br.shop", "amaz0n.com", "amazon.com.br.pedidos.net"]
+  },
+  {
+    brand: "iFood",
+    real: "ifood.com.br",
+    fakes: ["i-food.com", "ifood-promocoes.com", "ifoodbrasil.net"]
+  },
+  {
+    brand: "99",
+    real: "99app.com",
+    fakes: ["99-taxi.com", "noventaenove.com.br", "99app.com.br-oficial.com"]
+  },
+  {
+    brand: "Correios",
+    real: "correios.com.br",
+    fakes: ["correios-entrega.com", "correios.gov.com", "rastreio-correios.net"]
+  }
+];
+
+const ROUND_TIME = 8000; // ms
+let order = [];
+let current = 0;
+let score = 0;
+let answered = false;
+let timerStart = 0;
+let rafId = null;
+
+const roundCard = document.getElementById('roundCard');
+const progressFill = document.getElementById('progressFill');
+const timerFill = document.getElementById('timerFill');
+const scoreLabel = document.getElementById('scoreLabel');
+const endScreen = document.getElementById('endScreen');
+const endScore = document.getElementById('endScore');
+const endMsg = document.getElementById('endMsg');
+const restartBtn = document.getElementById('restartBtn');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function start() {
+  order = shuffle(ROUNDS.map((_, i) => i));
+  current = 0;
+  score = 0;
+  endScreen.classList.remove('show');
+  updateHud();
+  renderRound();
+}
+
+function updateHud() {
+  scoreLabel.textContent = `${score}/${ROUNDS.length}`;
+  progressFill.style.width = (current / ROUNDS.length) * 100 + "%";
+}
+
+function renderRound() {
+  if (current >= ROUNDS.length) {
+    endGame();
+    return;
+  }
+  answered = false;
+  const r = ROUNDS[order[current]];
+  const options = shuffle([r.real, ...r.fakes]);
+
+  roundCard.innerHTML = `
+    <div class="brand-card">
+      <p class="brand-name">${r.brand}</p>
+      <p class="brand-hint">Qual destes é o endereço oficial?</p>
+      <div class="options">
+        ${options.map(opt => `<button class="opt-btn" data-opt="${opt}">${opt}</button>`).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn">próxima</button>
+    </div>
+  `;
+
+  roundCard.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleChoice(btn, r));
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    current++;
+    updateHud();
+    renderRound();
+  });
+
+  runTimer(r);
+}
+
+function runTimer(r) {
+  timerStart = performance.now();
+  timerFill.style.background = "var(--mint)";
+  cancelAnimationFrame(rafId);
+  function tick(now) {
+    const elapsed = now - timerStart;
+    const pct = Math.max(0, 1 - elapsed / ROUND_TIME);
+    timerFill.style.width = (pct * 100) + "%";
+    if (pct < 0.3) timerFill.style.background = "var(--red)";
+    else if (pct < 0.6) timerFill.style.background = "var(--yellow)";
+    if (elapsed >= ROUND_TIME) {
+      if (!answered) timeUp(r);
+      return;
+    }
+    if (!answered) rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function timeUp(r) {
+  answered = true;
+  cancelAnimationFrame(rafId);
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.opt === r.real) b.classList.add('correct');
+  });
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show');
+  feedback.innerHTML = `Tempo esgotado. O endereço real é <strong>${r.real}</strong> — os outros são domínios parecidos criados para enganar.`;
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function handleChoice(btn, r) {
+  if (answered) return;
+  answered = true;
+  cancelAnimationFrame(rafId);
+  const chosen = btn.dataset.opt;
+  const correct = chosen === r.real;
+  if (correct) score++;
+
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.opt === r.real) b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+  });
+
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show');
+  if (correct) {
+    feedback.innerHTML = `Isso mesmo — <strong>${r.real}</strong> é o domínio oficial da ${r.brand}.`;
+  } else {
+    feedback.innerHTML = `Esse era falso. O endereço real é <strong>${r.real}</strong>; os demais imitam a grafia para parecer confiáveis.`;
+  }
+  scoreLabel.textContent = `${score}/${ROUNDS.length}`;
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function endGame() {
+  cancelAnimationFrame(rafId);
+  progressFill.style.width = "100%";
+  roundCard.innerHTML = "";
+  endScreen.classList.add('show');
+  endScore.textContent = `${score}/${ROUNDS.length}`;
+  let msg;
+  if (score === ROUNDS.length) msg = "Perfeito — nenhum domínio falso escapou.";
+  else if (score >= ROUNDS.length * 0.7) msg = "Muito bom olho para detalhes de URL.";
+  else if (score >= ROUNDS.length * 0.4) msg = "Vale o hábito de conferir o domínio antes de clicar, sempre.";
+  else msg = "Golpistas contam com pressa. Antes de clicar, olhe o endereço com calma.";
+  endMsg.textContent = msg;
+}
+
+restartBtn.addEventListener('click', start);
+start();
+</script>
+</body>
+</html>
